@@ -17,10 +17,31 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 # Start callback function returns a greeting
 def start(update,context):
-    context.bot.send_message(chat_id=update.effective_chat.id,text="I'm a bot, talk to me!")
+    context.bot.send_message(chat_id=update.effective_chat.id,text="""
+        Welcome to Better To(gather)'s party-matching bot!
+        We'll match you with other attendees with similar hobbies or interests. Exciting hor?
+    """)
 
 start_handler = CommandHandler('start',start)
 dispatcher.add_handler(start_handler)
+
+# Cue rules
+def rules(update,context):
+    """
+    We want to keep our Telegram page an open chat, but we are also a “family-friendly” page, so please keep comments and wall posts clean.
+
+    We want you to tell us what’s on your mind or provide a platform for likeminded individuals to connect through their interests, but if it falls into any of the categories below, we want to let you know beforehand that we will have to remove it:
+
+    1. We do not allow graphic, obscene, explicit or racial comments or submissions nor do we allow comments that are abusive, hateful or intended to defame anyone or any organization.
+
+    2. We do not allow third-party solicitations or advertisements. This includes promotion or endorsement of any financial, commercial or non-governmental agency. Similarly, we do not allow attempts to defame or defraud any financial, commercial or non-governmental agency.
+
+    3. We do not allow comments that support or encourage illegal activity.
+
+    Let’s make this a safe space for everyone! :D
+    """
+    pass
+
 
 updater.start_polling()
 updater.idle()
