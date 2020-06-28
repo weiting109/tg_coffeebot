@@ -16,7 +16,25 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                      level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def info_to_str(user_data):
+    """
+    Returns user data in string format:
+    user_data[property] - value
+    user_data[property] - value
+    ...
+    user_data[property] - value
 
+
+    e.g. to use this function
+    context.user_data['age'] = 20
+    update.message.reply_text(info_to_str(context.user_data))
+    """
+    facts = list()
+
+    for key, value in user_data.items():
+        facts.append(f'{key} - {value}')
+
+    return "\n".join(facts).join(['\n', '\n'])
 
 # Start callback function returns a greeting
 def start(update,context):
