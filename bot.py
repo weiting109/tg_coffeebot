@@ -1,4 +1,7 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import (Updater,
+                            CommandHandler, MessageHandler, ConversationHandler,
+                            Filters)
+from telegram import ReplyKeyboardMarkup
 from dotenv import load_dotenv
 from os import environ
 import logging
@@ -7,23 +10,19 @@ import logging
 load_dotenv('.env')
 BOT_TOKEN = environ.get('BOT_TOKEN')
 
-# Updater continuously fetches new updates from TG to be passed to Dispatcher
-updater = Updater(token=BOT_TOKEN,use_context=True)
-dispatcher = updater.dispatcher
 
 # Basic logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 
 # Start callback function returns a greeting
 def start(update,context):
     context.bot.send_message(chat_id=update.effective_chat.id,text="""
-        Welcome to Better To(gather)'s party-matching bot!
-        We'll match you with other attendees with similar hobbies or interests. Exciting hor?
+        Welcome to Better To(gather)'s party-matching bot! We'll match you with other attendees with similar hobbies or interests. Exciting hor?
     """)
-
-start_handler = CommandHandler('start',start)
-dispatcher.add_handler(start_handler)
 
 # Cue rules
 def rules(update,context):
@@ -42,6 +41,20 @@ def rules(update,context):
     """
     pass
 
+def main():
+    # Updater continuously fetches new updates from TG to be passed to Dispatcher
+    updater = Updater(token=BOT_TOKEN,use_context=True)
+    dispatcher = updater.dispatcher
 
-updater.start_polling()
-updater.idle()
+    start_handler = CommandHandler('start',start)
+    dispatcher.add_handler(start_handler)
+
+    # Start bot
+    updater.start_polling()
+
+    # Run the bot until Ctr-C or process receives SIGINT/SIGTERM/SIGABRT
+    # start_polling() is non-blocking, and will stop the bot gracefully
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
