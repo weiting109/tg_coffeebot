@@ -15,7 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                      level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-YESNO = range(3)
+RULES_AGREE, PREFERENCES = range(3)
 
 def info_to_str(user_data):
     """
@@ -37,24 +37,26 @@ def start(update,context):
     user = update.effective_user
     context.bot.send_message(chat_id=update.effective_chat.id,text=f"Hi @{user.username}! Welcome to Better To(gather)'s party-matching bot! We'll match you with other attendees with similar hobbies or interests. Exciting hor?")
 
+    reply_kb = [['I agree.','I do not agree.']]
+    markup = ReplyKeyboardMarkup(reply_kb, one_time_keyboard=True)
+
     update.message.reply_text("""We want to keep our Telegram page an open chat, but we are also a “family-friendly” page, so please keep comments and wall posts clean.,
         We want you to tell us what’s on your mind or provide a platform for likeminded individuals to connect through their interests, but if it falls into any of the categories below, we want to let you know beforehand that we will have to remove it:,
         \n1. We do not allow graphic, obscene, explicit or racial comments or submissions nor do we allow comments that are abusive, hateful or intended to defame anyone or any organization.
         \n2. We do not allow third-party solicitations or advertisements. This includes promotion or endorsement of any financial, commercial or non-governmental agency. Similarly, we do not allow attempts to defame or defraud any financial, commercial or non-governmental agency.
         \n3. We do not allow comments that support or encourage illegal activity.
-        \nLet’s make this a safe space for everyone! :D
+        \nLet’s make this a safe space for everyone! :D""",
+        reply_markup=markup)
 
-        Please send "Y" if you agree.""")
+    return RULES_AGREE
 
-    return YESNO
-
-def yesno(update, context):
+def rules_agree(update,context):
     text = update.message.text
-    if text.lower() == "y":
-        update.message.reply_text("You have agreed to the rules")
+    if text == 'I do not agree.':
+        update.message.reply_text("You must agree to the rules to be matched. Send \start to start again.")
         return ConversationHandler.END
     else:
-        update.message.reply_text("You must agree to the rules. Send \start to start again.")
+        update.message.reply_text("Welcome! Let's get started.")
         return ConversationHandler.END
 
 def main():
@@ -65,8 +67,8 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start',start)],
         states={
-            YESNO: [MessageHandler(Filters.text,
-                                    yesno)]
+            RULES_AGREE: [MessageHandler(Filters.text,
+                                        rules_agree)]
         },
         fallbacks=[]
     )
