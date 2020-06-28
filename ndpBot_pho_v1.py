@@ -9,6 +9,7 @@ to terminate: CTRL-C (not command!)
 """
 
 import logging
+from uuid import uuid4
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
@@ -22,17 +23,30 @@ logger = logging.getLogger(__name__)
 
 NAME, GENDER, AGE = range(3)
 
+"""
+the functions defined below are callback functions passed to Handlers. Arguments for
+different classes of Handler can be found in docs.
+
+some_fun(update, context) is the standard callback signature for the context based API
+"""
 
 def start(update, context):
     #sends starting message
     update.message.reply_text('Hello! Your name please')
 
+    #changes state of conv_handler
     return NAME
+
+
 
 def name(update, context):
     user = update.message.from_user
     logger.info("Name of %s: %s", user.first_name, update.message.text)
 
+    #store user's name in dict (accessed through context.user_data)
+    context.user_data['name'] = update.message.text
+
+    #define next state for conversation
     reply_keyboard = [['Boy', 'Girl', 'Other']]
 
     update.message.reply_text(
@@ -41,21 +55,47 @@ def name(update, context):
 
     return GENDER
 
+
+
 def gender(update, context):
     user = update.message.from_user
     logger.info("Gender of %s: %s", user.first_name, update.message.text)
+
+    #store user's gender in dict (accessed through context.user_data)
+    context.user_data['gender'] = update.message.text
 
     update.message.reply_text('You how old?')
 
     return AGE
 
+
+
 def age(update, context):
     user = update.message.from_user
     logger.info("Age of %s: %s", user.first_name, update.message.text)
 
+    #store user's age in dict (accessed through context.user_data)
+    context.user_data['age'] = update.message.text
+
     update.message.reply_text('OK ready')
 
     return ConversationHandler.END
+
+
+def getmyinfo(update, context):
+    """Usage: /getmyinfo uuid"""
+    # Seperate ID from command
+    key = update.message.text.partition(' ')[2]
+
+    # Load value
+    try:
+        value = context.user_data[key]
+        update.message.reply_text(value)
+
+    except KeyError:
+        update.message.reply_text('Not found')
+
+
 
 def cancel(update, context):
     user = update.message.from_user
@@ -64,6 +104,7 @@ def cancel(update, context):
                               reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
+
 
 
 def main():
@@ -84,6 +125,7 @@ def main():
     )
 
     dp.add_handler(conv_handler)
+    dp.add_handler(CommandHandler('getmyinfo', getmyinfo))
     updater.start_polling()
     updater.idle()
 
