@@ -108,7 +108,7 @@ def cancel(update, context):
 
 
 def main():
-    updater = Updater("1089985624:AAHp-olImnu1Q_i8wRJZlYNQb5B5dwG6vag", use_context=True)
+    updater = Updater("TOKEN", use_context=True)
     dp = updater.dispatcher
 
     #add conversation handler with states defined earlier
