@@ -11,7 +11,7 @@ class CoffeeDB():
     """
 
     def __init__ (self, dbname = 'coffeebot.db'):
-        self.conn = sqlite3.connect(dbname)
+        self.conn = sqlite3.connect(dbname,check_same_thread=False)
         self.c = self.conn.cursor()
     
     def setup(self):
@@ -32,6 +32,18 @@ class CoffeeDB():
                 )
             ''')
         self.conn.commit()
+
+    col = {
+        'user_id': 0,
+        'chat_id': 1,
+        'datetime': 2,
+        'username': 3,
+        'firstname': 4,
+        'gender': 5,
+        'agegroup': 6,
+        'bio': 7,
+        'matched': 8
+    }
 
 if __name__ == "__main__":
     db = CoffeeDB()
