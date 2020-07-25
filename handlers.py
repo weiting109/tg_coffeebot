@@ -147,6 +147,13 @@ def new_req(update, context):
     db.c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)',user_info)
     db.conn.commit()
 
+def isMatchAvailable():
+    """
+    Check if a match is available
+    """
+    res = db.c.execute("SELECT username FROM users WHERE matched=0").fetchall()
+    return len(res) == 0
+
 def bio(update, context):
     user = update.message.from_user
     logger.info("Bio of %s: %s", user.first_name, update.message.text)
@@ -155,14 +162,11 @@ def bio(update, context):
     context.user_data['bio'] = update.message.text
     update.message.reply_text('Okay, finding a match for you...')
 
-    new_req(update,context)
-
-    '''
     #check for match
     #if match unavailable, proceed to end conversation; if available, notify both parties
-    if len(c.execute("SELECT username FROM users WHERE matched=0").fetchall()) == 0:
+    if not isMatchAvailable():
         update.message.reply_text('Waiting for match...')
-
+    '''
     else:
         #retrieve user_id of match
         c = c.execute("SELECT TOP username FROM users WHERE matched=0").fetchone()
@@ -175,6 +179,7 @@ def bio(update, context):
         #send message to both parties
         update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
     '''
+    new_req(update,context)
     return ConversationHandler.END
 
 def cancel(update, context):
