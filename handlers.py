@@ -160,7 +160,7 @@ def retrieveMatchRow():
     #retrieve user_id of match
     match = db.c.execute("SELECT * FROM users WHERE matched=0").fetchone()
     matched_userID = match[CoffeeDB.col['user_id']]
-    
+
     #update db records of matched party
     db.c.execute(f'''
                 UPDATE users
@@ -182,6 +182,7 @@ def bio(update, context):
     #if match unavailable, proceed to end conversation; if available, notify both parties
     if isMatchAvailable():
         match = retrieveMatchRow()
+        match_chatid = match[CoffeeDB.col['chat_id']]
         match_username =  match[CoffeeDB.col['username']]
         match_name = match[CoffeeDB.col['firstname']]
         match_gender = match[CoffeeDB.col['gender']]
@@ -192,8 +193,11 @@ def bio(update, context):
         update.message.reply_text(f"We've found a match! Meet @{match_username}, who says: {match_bio}")
 
         #send message to match -- CODE NEEDED
+        message = (f"We've found a match! Meet @{user.username}, who says: {update.message.text}")
+        context.bot.send_message(match_chatid, message)
 
         matched = 1 #current User has been matched
+
     else:
         update.message.reply_text('Waiting for match...')
         matched = 0
