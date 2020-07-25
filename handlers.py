@@ -133,8 +133,6 @@ def insertNewReq(update, context, matched):
     """
     Create new row in users table when a new request is made.
     """
-    #conn = sqlite3.connect('coffeebot.db')
-    #c = conn.cursor()
     user_info = (update.effective_user.id,
                 update.effective_chat.id,
                 datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))),
@@ -152,7 +150,23 @@ def isMatchAvailable():
     Check if a match is available
     """
     res = db.c.execute("SELECT username FROM users WHERE matched=0").fetchall()
-    return len(res) == 0
+    return len(res) > 0
+
+def retrieveMatchRow():
+    """
+    Retrieves first available user to be matched
+    """
+    #retrieve user_id of match
+    match = db.c.execute("SELECT * FROM users WHERE matched=0").fetchone()
+    matched_userID = match[0]
+
+    #update db records of matched party
+    db.c.execute(f'''
+                UPDATE users
+                SET matched = 1
+                WHERE user_id = {matched_userID}
+                ''')
+    return match
 
 def bio(update, context):
     user = update.message.from_user
@@ -166,19 +180,14 @@ def bio(update, context):
     #if match unavailable, proceed to end conversation; if available, notify both parties
     if not isMatchAvailable():
         update.message.reply_text('Waiting for match...')
-    '''
     else:
-        #retrieve user_id of match
-        c = c.execute("SELECT TOP username FROM users WHERE matched=0").fetchone()
-        matched_username = c[0]
-        c = c.execute("SELECT TOP bio FROM users WHERE matched=0").fetchone()
-        matched_bio = c[0]
-
-        #update db records of matched parties
+        match = retrieveMatchRow()
 
         #send message to both parties
-        update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
-    '''
+        #update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
+
+        matched = 1 #current User has been matched
+
     insertNewReq(update,context,matched=0)
     return ConversationHandler.END
 
@@ -205,3 +214,7 @@ add_gender = MessageHandler(Filters.regex('^(He/him|She/her|They/them)$'), gende
 add_age = MessageHandler(Filters.text, age)
 add_bio = MessageHandler(Filters.text, bio)
 add_catch_random = MessageHandler(Filters.all, catch_random)
+
+if __name__ == "__main__":
+    print(isMatchAvailable())
+    retrieveMatchRow()
