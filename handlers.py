@@ -129,7 +129,7 @@ def age(update, context):
 
     return BIO
 
-def new_req(update, context):
+def new_req(update, context, matched):
     """
     Create new row in users table when a new request is made.
     """
@@ -143,7 +143,7 @@ def new_req(update, context):
                 context.user_data['gender'],
                 context.user_data['age'],
                 context.user_data['bio'],
-                0)
+                matched)
     db.c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)',user_info)
     db.conn.commit()
 
@@ -179,7 +179,7 @@ def bio(update, context):
         #send message to both parties
         update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
     '''
-    new_req(update,context)
+    new_req(update,context,matched=0)
     return ConversationHandler.END
 
 def cancel(update, context):
