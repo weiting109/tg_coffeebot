@@ -7,6 +7,7 @@ import datetime
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 from config import db
+from database import CoffeeDB
 
 """
 the functions defined below are callback functions passed to Handlers. Arguments for
@@ -158,14 +159,15 @@ def retrieveMatchRow():
     """
     #retrieve user_id of match
     match = db.c.execute("SELECT * FROM users WHERE matched=0").fetchone()
-    matched_userID = match[0]
-
+    matched_userID = match[CoffeeDB.col['user_id']]
+    
     #update db records of matched party
     db.c.execute(f'''
                 UPDATE users
                 SET matched = 1
                 WHERE user_id = {matched_userID}
                 ''')
+    db.conn.commit()
     return match
 
 def bio(update, context):
@@ -214,7 +216,3 @@ add_gender = MessageHandler(Filters.regex('^(He/him|She/her|They/them)$'), gende
 add_age = MessageHandler(Filters.text, age)
 add_bio = MessageHandler(Filters.text, bio)
 add_catch_random = MessageHandler(Filters.all, catch_random)
-
-if __name__ == "__main__":
-    print(isMatchAvailable())
-    retrieveMatchRow()

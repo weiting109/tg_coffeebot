@@ -33,6 +33,18 @@ class CoffeeDB():
             ''')
         self.conn.commit()
 
+    col = {
+        'user_id': 0,
+        'chat_id': 1,
+        'datetime': 2,
+        'username': 3,
+        'firstname': 4,
+        'gender': 5,
+        'agegroup': 6,
+        'bio': 7,
+        'matched': 8
+    }
+
 if __name__ == "__main__":
     db = CoffeeDB()
     db.setup()
