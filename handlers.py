@@ -7,6 +7,7 @@ import datetime
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 import sqlite3
+from config import db
 
 """
 the functions defined below are callback functions passed to Handlers. Arguments for
@@ -129,17 +130,12 @@ def age(update, context):
 
     return BIO
 
-
-def bio(update, context):
-    user = update.message.from_user
-    logger.info("Bio of %s: %s", user.first_name, update.message.text)
-
-    #store user's age in dict (accessed through context.user_data)
-    context.user_data['bio'] = update.message.text
-    update.message.reply_text('Okay, finding a match for you...')
-
-    conn = sqlite3.connect('coffeebot.db')
-    c = conn.cursor()
+def new_req(update, context):
+    """
+    Create new row in users table when a new request is made.
+    """
+    #conn = sqlite3.connect('coffeebot.db')
+    #c = conn.cursor()
     user_info = (update.effective_user.id,
                 update.effective_chat.id,
                 datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))),
@@ -149,9 +145,20 @@ def bio(update, context):
                 context.user_data['age'],
                 context.user_data['bio'],
                 0)
-    c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)',user_info)
-    conn.commit()
+    db.c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)',user_info)
+    db.conn.commit()
 
+def bio(update, context):
+    user = update.message.from_user
+    logger.info("Bio of %s: %s", user.first_name, update.message.text)
+
+    #store user's age in dict (accessed through context.user_data)
+    context.user_data['bio'] = update.message.text
+    update.message.reply_text('Okay, finding a match for you...')
+
+    new_req(update,context)
+
+    '''
     #check for match
     #if match unavailable, proceed to end conversation; if available, notify both parties
     if len(c.execute("SELECT username FROM users WHERE matched=0").fetchall()) == 0:
@@ -168,12 +175,8 @@ def bio(update, context):
 
         #send message to both parties
         update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
-
-
-
+    '''
     return ConversationHandler.END
-
-
 
 def cancel(update, context):
     user = update.message.from_user

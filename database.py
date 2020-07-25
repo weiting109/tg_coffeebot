@@ -11,7 +11,7 @@ class CoffeeDB():
     """
 
     def __init__ (self, dbname = 'coffeebot.db'):
-        self.conn = sqlite3.connect(dbname)
+        self.conn = sqlite3.connect(dbname,check_same_thread=False)
         self.c = self.conn.cursor()
     
     def setup(self):
