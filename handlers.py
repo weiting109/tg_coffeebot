@@ -6,8 +6,7 @@ import logging
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
-
-
+import sqlite3
 
 """
 the functions defined below are callback functions passed to Handlers. Arguments for
@@ -138,6 +137,19 @@ def bio(update, context):
     #store user's age in dict (accessed through context.user_data)
     context.user_data['bio'] = update.message.text
     update.message.reply_text('Okay, finding a match for you...')
+
+    conn = sqlite3.connect('coffeebot.db')
+    c = conn.cursor()
+    user_info = (update.effective_user.id,
+                update.effective_chat.id,
+                update.effective_user.username,
+                context.user_data['name'],
+                context.user_data['gender'],
+                context.user_data['age'],
+                context.user_data['bio'],
+                0)
+    c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?)',user_info)
+    conn.commit()
 
     return ConversationHandler.END
 

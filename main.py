@@ -15,7 +15,7 @@ from uuid import uuid4
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 
 from handlers import add_rules, add_intro, add_name, add_gender, add_age, add_bio, start, cancel, add_catch_random
-
+from config import db
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -34,6 +34,8 @@ with open("token.txt") as f:
 
 
 def main():
+    db.setup() #create users table in database
+    
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
