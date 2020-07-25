@@ -180,17 +180,25 @@ def bio(update, context):
 
     #check for match
     #if match unavailable, proceed to end conversation; if available, notify both parties
-    if not isMatchAvailable():
-        update.message.reply_text('Waiting for match...')
-    else:
+    if isMatchAvailable():
         match = retrieveMatchRow()
+        match_username =  match[CoffeeDB.col['username']]
+        match_name = match[CoffeeDB.col['firstname']]
+        match_gender = match[CoffeeDB.col['gender']]
+        match_agegroup = match[CoffeeDB.col['agegroup']]
+        match_bio = match[CoffeeDB.col['bio']]
 
-        #send message to both parties
-        #update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
+        #send message to curr user
+        update.message.reply_text(f"We've found a match! Meet @{match_username}, who says: {match_bio}")
+
+        #send message to match -- CODE NEEDED
 
         matched = 1 #current User has been matched
+    else:
+        update.message.reply_text('Waiting for match...')
+        matched = 0
 
-    insertNewReq(update,context,matched=0)
+    insertNewReq(update,context,matched)
     return ConversationHandler.END
 
 def cancel(update, context):
@@ -200,7 +208,6 @@ def cancel(update, context):
                               reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
-
 
 def catch_random(update, context):
     user = update.message.from_user
@@ -216,3 +223,7 @@ add_gender = MessageHandler(Filters.regex('^(He/him|She/her|They/them)$'), gende
 add_age = MessageHandler(Filters.text, age)
 add_bio = MessageHandler(Filters.text, bio)
 add_catch_random = MessageHandler(Filters.all, catch_random)
+
+if __name__ == "__main__":
+    print(isMatchAvailable())
+    print(retrieveMatchRow())
