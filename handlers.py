@@ -6,7 +6,6 @@ import logging
 import datetime
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
-import sqlite3
 from config import db
 
 """
