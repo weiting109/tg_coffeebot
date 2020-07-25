@@ -1,3 +1,6 @@
 token.txt
 venv
 __pycache__
+
+#any temp local db generated
+*.db
