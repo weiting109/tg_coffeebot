@@ -3,7 +3,7 @@
 Handlers for NDP Better To(gather) chatbot
 """
 import logging
-
+import datetime
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 import sqlite3
@@ -142,13 +142,14 @@ def bio(update, context):
     c = conn.cursor()
     user_info = (update.effective_user.id,
                 update.effective_chat.id,
+                datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))),
                 update.effective_user.username,
                 context.user_data['name'],
                 context.user_data['gender'],
                 context.user_data['age'],
                 context.user_data['bio'],
                 0)
-    c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?)',user_info)
+    c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)',user_info)
     conn.commit()
 
     #check for match

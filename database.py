@@ -22,6 +22,7 @@ class CoffeeDB():
                 users
                 (user_id INT PRIMARY KEY,
                 chat_id INT UNIQUE,
+                datetime DATETIME,
                 username VARCHAR(50) NOT NULL,
                 firstname VARCHAR(50) NOT NULL,
                 gender VARCHAR(20) DEFAULT 'They/Them',
