@@ -1,10 +1,10 @@
 import sqlite3
 
-class coffeeDB():
+class CoffeeDB():
     """
     Database helper function for coffee chatbot
-    coffeeDB.conn is the Connection object that represents the database
-    coffeeDB.c is the Cursor object to perform SQL commands
+    CoffeeDB.conn is the Connection object that represents the database
+    CoffeeDB.c is the Cursor object to perform SQL commands
     
     More info about DB-API interface for SQLite databases:
     https://docs.python.org/3/library/sqlite3.html#cursor-objects
@@ -33,7 +33,7 @@ class coffeeDB():
         self.conn.commit()
 
 if __name__ == "__main__":
-    db = coffeeDB()
+    db = CoffeeDB()
     db.setup()
     db.c.execute(''' SELECT * FROM users ''')
     print(db.c.fetchall())
