@@ -10,7 +10,7 @@ class CoffeeDB():
     https://docs.python.org/3/library/sqlite3.html#cursor-objects
     """
 
-    def __init__ (self, dbname = 'scoffeebot.db'):
+    def __init__ (self, dbname = 'coffeebot.db'):
         self.conn = sqlite3.connect(dbname)
         self.c = self.conn.cursor()
     
