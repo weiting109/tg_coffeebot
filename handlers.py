@@ -151,6 +151,25 @@ def bio(update, context):
     c.execute('INSERT INTO users VALUES (?,?,?,?,?,?,?,?)',user_info)
     conn.commit()
 
+    #check for match
+    #if match unavailable, proceed to end conversation; if available, notify both parties
+    if len(c.execute("SELECT username FROM users WHERE matched=0").fetchall()) == 0:
+        update.message.reply_text('Waiting for match...')
+
+    else:
+        #retrieve user_id of match
+        c = c.execute("SELECT TOP username FROM users WHERE matched=0").fetchone()
+        matched_username = c[0]
+        c = c.execute("SELECT TOP bio FROM users WHERE matched=0").fetchone()
+        matched_bio = c[0]
+
+        #update db records of matched parties
+
+        #send message to both parties
+        update.message.reply_text("We've found a match! Meet @%s, who says: %s", matched_username, matched_bio)
+
+
+
     return ConversationHandler.END
 
 
