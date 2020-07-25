@@ -138,24 +138,11 @@ def bio(update, context):
     context.user_data['bio'] = update.message.text
     update.message.reply_text('Okay, finding a match for you...')
 
-    """
-    user_info = (user.id,
-                202,
-                user.username,
-                context.user_data['name'],
-                context.user_data['gender'],
-                context.user_data['age'],
-                context.user_data['bio'])
-    db.c.execute('''
-        INSERT INTO TABLE users VALUES (?,?,?,?,?,?,?,?)
-    ''',user_info)
-    db.conn.commit()
-    """
     conn = sqlite3.connect('coffeebot.db')
     c = conn.cursor()
-    user_info = (user.id,
-                202,
-                user.username,
+    user_info = (update.effective_user.id,
+                update.effective_chat.id,
+                update.effective_user.username,
                 context.user_data['name'],
                 context.user_data['gender'],
                 context.user_data['age'],
