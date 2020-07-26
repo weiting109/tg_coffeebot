@@ -35,17 +35,6 @@ def start(update, context):
     #changes state of conv_handler. should make this function a bit more flexible
     return RULES
 
-
-def get_user_details(user):
-    """Gets user details from User object"""
-    user_id = user.id
-    username = user.full_name
-    logger.info(f"Got user details: {user_id} {username}")
-
-    if not get_user_document(user_id):
-        create_user_document(user_id, username)
-
-
 def rules(update, context):
     user = update.message.from_user
     logger.info("User %s 's password: %s", user.first_name, update.message.text)
@@ -190,10 +179,22 @@ def bio(update, context):
         match_bio = match[CoffeeDB.col['bio']]
 
         #send message to curr user
-        update.message.reply_text(f"We've found a match! Meet @{match_username}, who says: {match_bio}")
+        update.message.reply_text(f'''
+                                We've found a match - meet @{match_username}! 
+                                \n\n Name: {match_name}
+                                \n Preferred pronouns: {match_gender}
+                                \n Age group: {match_agegroup}
+                                \n Bio: {match_bio}
+                                \n\n Happy chatting!''')
 
-        #send message to match -- CODE NEEDED
-        message = (f"We've found a match! Meet @{user.username}, who says: {update.message.text}")
+        #send message to match
+        message = (f'''
+                    We've found a match - meet @{user.username}!
+                    \n\n Name: {context.user_data['name']}
+                    \n Preferred pronouns: {context.user_data['gender']}
+                    \n Age group: {context.user_data['age']}
+                    \n Bio: {context.user_data['bio']}       
+                    \n\n Happy chatting!''')
         context.bot.send_message(match_chatid, message)
 
         matched = 1 #current User has been matched
