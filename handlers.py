@@ -21,19 +21,31 @@ logger = logging.getLogger(__name__)
 #initialize dict keys
 RULES, INTRO, NAME, GENDER, BIO, AGE = range(6)
 
+def isUsernameAvailable(update):
+    """
+    Check if user has set a username
+    """
+    return update.effective_user.username != None
 
 def start(update, context):
 
     #sends starting message and request password
-    update.message.reply_text(
-    "Welcome to Better To(gather)'s party-matching bot! "
-    "We'll match you with other attendees with similar hobbies or interests. Exciting hor? \n"
+    #prompts user to set a username and ends conversation if username is unavailable
+    if isUsernameAvailable(update):
+        update.message.reply_text(
+        "Welcome to Better To(gather)'s party-matching bot! "
+        "We'll match you with a random cool attendee. Exciting hor? \n"
 
-    "\nYou shall not pass...without a password! Please enter:"
-    )
+        "\nYou shall not pass...without a password! Please enter:"
+        )
 
-    #changes state of conv_handler. should make this function a bit more flexible
-    return RULES
+        #changes state of conv_handler. should make this function a bit more flexible
+        return RULES
+
+    else:
+        update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
+        return ConversationHandler.END
+
 
 def rules(update, context):
     user = update.message.from_user
@@ -180,7 +192,7 @@ def bio(update, context):
 
         #send message to curr user
         update.message.reply_text(f'''
-                                We've found a match - meet @{match_username}! 
+                                We've found a match - meet @{match_username}!
                                 \n\n Name: {match_name}
                                 \n Preferred pronouns: {match_gender}
                                 \n Age group: {match_agegroup}
@@ -193,7 +205,7 @@ def bio(update, context):
                     \n\n Name: {context.user_data['name']}
                     \n Preferred pronouns: {context.user_data['gender']}
                     \n Age group: {context.user_data['age']}
-                    \n Bio: {context.user_data['bio']}       
+                    \n Bio: {context.user_data['bio']}
                     \n\n Happy chatting!''')
         context.bot.send_message(match_chatid, message)
 
@@ -224,7 +236,7 @@ add_start_cmd = CommandHandler('start', start)
 add_rules = MessageHandler(Filters.regex('^password$'), rules)
 add_intro = MessageHandler(Filters.text, intro)
 add_name = MessageHandler(Filters.text, name)
-add_gender = MessageHandler(Filters.regex('^(He/him|She/her|They/them)$'), gender)
+add_gender = MessageHandler(Filters.text, gender)
 add_age = MessageHandler(Filters.text, age)
 add_bio = MessageHandler(Filters.text, bio)
 add_catch_random = MessageHandler(Filters.all, catch_random)
