@@ -227,7 +227,8 @@ def bio(update, context):
                                 \n Preferred pronouns: {match_gender}
                                 \n Age group: {match_agegroup}
                                 \n Bio: {match_bio}
-                                \n\n Happy chatting!''')
+                                \n\n Go ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!
+                                \n Feeling a bit paiseh to talk to strangers? Come come we tell you some jokes. ''')
 
         #send message to match
         message = (f'''
@@ -236,16 +237,29 @@ def bio(update, context):
                     \n Preferred pronouns: {context.user_data['gender']}
                     \n Age group: {context.user_data['age']}
                     \n Bio: {context.user_data['bio']}
-                    \n\n Happy chatting!''')
-        context.bot.send_message(match_chatid, message)
+                    \n\n Go ahead and drop {context.user_data['name']} a text to say hello :-) Happy chatting and enjoy the party!
+                    \n Feeling a bit paiseh to talk to strangers? Come come we tell you some jokes. ''')
 
+        context.bot.send_message(match_chatid, message)
         matched = 1 #current User has been matched
+        logger.info(f"User @{match_username} has been matched with user @{user.username}")
 
     else:
         update.message.reply_text('Waiting for match...')
         matched = 0
 
-    insertNewReq(update,context,matched)
+    if db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone() == None:
+        insertNewReq(update,context,matched)
+
+    else:
+        #update db records of matched party
+        db.c.execute(f'''
+                    UPDATE users
+                    SET matched = {matched}
+                    WHERE chat_id = {update.effective_chat.id}
+                    ''')
+        db.conn.commit()
+
     return ConversationHandler.END
 
 def cancel(update, context):
