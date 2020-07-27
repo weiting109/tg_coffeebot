@@ -27,24 +27,54 @@ def isUsernameAvailable(update):
     """
     return update.effective_user.username != None
 
+def matchedPreviously(update, context):
+    """
+    Check if user has obtained a match previously
+    """
+    match = db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone()
+    return match!=None
+
 def start(update, context):
 
-    #sends starting message and request password
-    #prompts user to set a username and ends conversation if username is unavailable
-    if isUsernameAvailable(update):
-        update.message.reply_text(
-        "Welcome to Better To(gather)'s party-matching bot! "
-        "We'll match you with a random cool attendee. Exciting hor? \n"
+    if matchedPreviously(update, context):
 
-        "\nYou shall not pass...without a password! Please enter:"
-        )
+        #check if user has obtained a match before trying again
+        match = db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone()
+        matched = match[CoffeeDB.col['matched']]
+        context.user_data['name'] = match[CoffeeDB.col['firstname']]
+        context.user_data['gender'] = match[CoffeeDB.col['gender']]
+        context.user_data['age'] = match[CoffeeDB.col['agegroup']]
+        context.user_data['bio'] = match[CoffeeDB.col['bio']]
 
-        #changes state of conv_handler. should make this function a bit more flexible
-        return RULES
+        if matched==1:
+        #if user has gotten a match before, jump straight to bio section
+            update.message.reply_text(
+            "Welcome back to Better To(gather)'s party-matching bot! "
+            "Tell us another interesting thing about yourself?")
+
+            return BIO
+
+        else:
+            update.message.reply_text('Still waiting for match...')
+            return ConversationHandler.END
 
     else:
-        update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
-        return ConversationHandler.END
+    #if user is new, sends starting message and request password
+    #prompts user to set a username and ends conversation if username is unavailable
+        if isUsernameAvailable(update):
+            update.message.reply_text(
+            "Welcome to Better To(gather)'s party-matching bot! "
+            "We'll match you with a random cool attendee. Exciting hor? \n"
+
+            "\nYou shall not pass...without a password! Please enter:"
+            )
+
+            #changes state of conv_handler. should make this function a bit more flexible
+            return RULES
+
+        else:
+            update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
+            return ConversationHandler.END
 
 
 def rules(update, context):
