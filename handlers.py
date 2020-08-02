@@ -191,22 +191,70 @@ def isMatchAvailable():
     res = db.c.execute("SELECT username FROM users WHERE matched=0").fetchall()
     return len(res) > 0
 
+def identicalMatchExists(user, match_username):
+    """
+    Check if the matched users have been matched previously to prevent repeated matches
+    """
+    if user.username < match_username:
+        user1, user2 = user.username, match_username
+
+    else:
+        user1, user2 = match_username, user.username
+
+    res = db.c.execute(f"SELECT * FROM matches WHERE user1_id = '{user1}' AND user2_id = '{user2}'").fetchall()
+    return len(res) > 0
+
 def retrieveMatchRow():
     """
-    Retrieves first available user to be matched
+    Checks if the matched users have been matched previously (prevent repeated matches)
+    Retrieves first available and eligible user to be matched
     """
-    #retrieve user_id of match
-    match = db.c.execute("SELECT * FROM users WHERE matched=0").fetchone()
-    matched_userID = match[CoffeeDB.col['user_id']]
+    #retrieve all available matches
+    available_matches = db.c.execute("SELECT * FROM users WHERE matched=0").fetchall()
 
-    #update db records of matched party
-    db.c.execute(f'''
-                UPDATE users
-                SET matched = 1
-                WHERE user_id = {matched_userID}
-                ''')
+    #iterate through matches, checking if identicalMatchExists
+    for match in available_matches:
+        matched_userID = match[CoffeeDB.col['user_id']]
+        matched_username = match[CoffeeDB.col['username']]
+
+        if identicalMatchExists(user, matched_username):
+            match_success = 0
+            continue
+
+        else:
+            match_success = 1
+            #update db records of matched party
+            db.c.execute(f'''
+                        UPDATE users
+                        SET matched = 1
+                        WHERE user_id = {matched_userID}
+                        ''')
+            db.conn.commit()
+            break
+
+    if match_success==0:
+        return 0
+    else:
+        return match
+
+def insertNewMatch(update, match_username):
+    """
+    Create new row in matches table when a new match is made
+    Composite key decided by alphabetical order to prevent repeated matches
+    """
+    if update.effective_user.username < match_username:
+        user1, user2 = update.effective_user.username, match_username
+
+    else:
+        user1, user2 = match_username, update.effective_user.username
+
+    match_info = (user1,
+                 user2,
+                 datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))))
+
+    db.c.execute('INSERT INTO matches VALUES (?,?,?)',match_info)
     db.conn.commit()
-    return match
+
 
 def bio(update, context):
     user = update.message.from_user
@@ -219,36 +267,44 @@ def bio(update, context):
     #check for match
     #if match unavailable, proceed to end conversation; if available, notify both parties
     if isMatchAvailable():
-        match = retrieveMatchRow()
-        match_chatid = match[CoffeeDB.col['chat_id']]
-        match_username =  match[CoffeeDB.col['username']]
-        match_name = match[CoffeeDB.col['firstname']]
-        match_gender = match[CoffeeDB.col['gender']]
-        match_agegroup = match[CoffeeDB.col['agegroup']]
-        match_bio = match[CoffeeDB.col['bio']]
+        match = retrieveMatchRow(user)
 
-        #send message to curr user
-        update.message.reply_text(f'''
-                                We've found a match - meet @{match_username}!
-                                \n\n Name: {match_name}
-                                \n Preferred pronouns: {match_gender}
-                                \n Age group: {match_agegroup}
-                                \n Bio: {match_bio}
-                                \n\nGo ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!''')
+        #if unique match is available:
+        if match!=0:
+            match_chatid = match[CoffeeDB.col['chat_id']]
+            match_username =  match[CoffeeDB.col['username']]
+            match_name = match[CoffeeDB.col['firstname']]
+            match_gender = match[CoffeeDB.col['gender']]
+            match_agegroup = match[CoffeeDB.col['agegroup']]
+            match_bio = match[CoffeeDB.col['bio']]
 
-        #send message to match
-        message = (f'''
-                    We've found a match - meet @{user.username}!
-                    \n\n Name: {context.user_data['name']}
-                    \n Preferred pronouns: {context.user_data['gender']}
-                    \n Age group: {context.user_data['age']}
-                    \n Bio: {context.user_data['bio']}
-                    \n\n Go ahead and drop {context.user_data['name']} a text to say hello :-) Happy chatting and enjoy the party!
-                    ''')
+            #send message to curr user
+            update.message.reply_text(f'''
+                                    We've found a match - meet @{match_username}!
+                                    \n\n Name: {match_name}
+                                    \n Preferred pronouns: {match_gender}
+                                    \n Age group: {match_agegroup}
+                                    \n Bio: {match_bio}
+                                    \n\nGo ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!''')
 
-        context.bot.send_message(match_chatid, message)
-        matched = 1 #current User has been matched
-        logger.info(f"User @{match_username} has been matched with user @{user.username}")
+            #send message to match
+            message = (f'''
+                        We've found a match - meet @{user.username}!
+                        \n\n Name: {context.user_data['name']}
+                        \n Preferred pronouns: {context.user_data['gender']}
+                        \n Age group: {context.user_data['age']}
+                        \n Bio: {context.user_data['bio']}
+                        \n\nGo ahead and drop {context.user_data['name']} a text to say hello :-) Happy chatting and enjoy the party!''')
+
+            context.bot.send_message(match_chatid, message)
+            matched = 1 #current User has been matched
+            insertNewMatch(update, match_username)
+            logger.info(f"User @{match_username} has been matched with user @{user.username}")
+
+        else:
+            update.message.reply_text('Waiting for match...')
+            logger.info("Only identical matches available, waiting for further match requests")
+            matched = 0
 
     else:
         update.message.reply_text('Waiting for match...')
