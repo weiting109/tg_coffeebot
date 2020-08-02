@@ -224,8 +224,7 @@ def bio(update, context):
                                 \n Preferred pronouns: {match_gender}
                                 \n Age group: {match_agegroup}
                                 \n Bio: {match_bio}
-                                \n\n Go ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!
-                                \n Feeling a bit paiseh to talk to strangers? Come come we tell you some jokes. ''')
+                                \n\nGo ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!''')
 
         #send message to match
         message = (f'''
