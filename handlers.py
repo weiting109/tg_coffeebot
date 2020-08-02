@@ -84,27 +84,34 @@ def rules(update, context):
     user = update.message.from_user
     logger.info("User %s 's password: %s", user.first_name, update.message.text)
 
-    #set reply_keyboard
-    reply_keyboard = [["OK, can"]]
+    #move password check from MessageHandler's Filter to here for flexibility
+    if update.message.text != "ILOVESG":
+        update.message.reply_text("Alamak, wrong password! Try again?")
 
-    update.message.reply_text(
-    "OK very nice. Hello! "
-    "This is an open chat, and  a platform for like-minded individuals to connect and forge friendships. ""
-    Please help us to build a safe space, by not posting:\n"
+        return RULES
 
-    "\n1. Graphic, obscene, explicit or racially/religiously offensive content. \n"
+    else:
+        #set reply_keyboard
+        reply_keyboard = [["OK, can"]]
 
-    "\n2. Anything abusive, hateful or intended to defame or defraud anyone or any organization. \n"
+        update.message.reply_text(
+        "OK very nice. Hello! "
+        "This is an open chat, and  a platform for like-minded individuals to connect and forge friendships. ""
+        Please help us to build a safe space, by not posting:\n"
 
-    "\n3. Third-party solicitations or advertisements. This includes promotion or endorsement of any financial, "
-    "commercial or non-governmental agency. Comments that support or encourage illegal activity. \n"
+        "\n1. Graphic, obscene, explicit or racially/religiously offensive content. \n"
 
-    "\nThank you for your support! \n"
-    "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n",
-    reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
-    )
+        "\n2. Anything abusive, hateful or intended to defame or defraud anyone or any organization. \n"
 
-    return INTRO
+        "\n3. Third-party solicitations or advertisements. This includes promotion or endorsement of any financial, "
+        "commercial or non-governmental agency. Comments that support or encourage illegal activity. \n"
+
+        "\nThank you for your support! \n"
+        "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        )
+
+        return INTRO
 
 
 def intro(update, context):
@@ -276,7 +283,7 @@ def catch_random(update, context):
 
 
 add_start_cmd = CommandHandler('start', start)
-add_rules = MessageHandler(Filters.regex('^password$'), rules)
+add_rules = MessageHandler(Filters.text, rules)
 add_intro = MessageHandler(Filters.text, intro)
 add_name = MessageHandler(Filters.text, name)
 add_gender = MessageHandler(Filters.text, gender)
