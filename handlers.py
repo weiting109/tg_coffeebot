@@ -36,6 +36,9 @@ def matchedPreviously(update, context):
 
 def start(update, context):
 
+    user = update.message.from_user
+    logger.info("User %s has started a match request", user.first_name)
+
     if matchedPreviously(update, context):
 
         #check if user has obtained a match before trying again
