@@ -235,7 +235,7 @@ def bio(update, context):
                     \n Age group: {context.user_data['age']}
                     \n Bio: {context.user_data['bio']}
                     \n\n Go ahead and drop {context.user_data['name']} a text to say hello :-) Happy chatting and enjoy the party!
-                    \n Feeling a bit paiseh to talk to strangers? Come come we tell you some jokes. ''')
+                    ''')
 
         context.bot.send_message(match_chatid, message)
         matched = 1 #current User has been matched
