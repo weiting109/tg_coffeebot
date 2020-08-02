@@ -19,7 +19,7 @@ some_fun(update, context) is the standard callback signature for the context bas
 logger = logging.getLogger(__name__)
 
 #initialize dict keys
-RULES, INTRO, NAME, GENDER, BIO, AGE = range(6)
+DISCLAIMER, RULES, INTRO, NAME, GENDER, BIO, AGE = range(7)
 
 def isUsernameAvailable(update):
     """
@@ -96,45 +96,56 @@ def start(update, context):
                 )
 
                 #changes state of conv_handler. should make this function a bit more flexible
-                return RULES
+                return DISCLAIMER
 
             else:
                 update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
                 return ConversationHandler.END
 
-
-def rules(update, context):
+def disclaimer(update, context):
     user = update.message.from_user
     logger.info("User %s 's password: %s", user.first_name, update.message.text)
 
-    #move password check from MessageHandler's Filter to here for flexibility
     if update.message.text != "ILOVESG":
         update.message.reply_text("Alamak, wrong password! Try again?")
 
-        return RULES
+        return DISCLAIMER
 
     else:
         #set reply_keyboard
-        reply_keyboard = [["OK, can"]]
+        reply_keyboard = [["Yes, I understand"]]
 
         update.message.reply_text(
         "OK very nice. Hello! "
-        "This is an open chat, and  a platform for like-minded individuals to connect and forge friendships. ""
-        Please help us to build a safe space, by not posting:\n"
+        "This is an open chat, and  a platform for like-minded individuals to connect and forge friendships. "
+        "Note that this bot will share your Telegram handle with your match partner.",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
 
-        "\n1. Graphic, obscene, explicit or racially/religiously offensive content. \n"
+        return RULES
 
-        "\n2. Anything abusive, hateful or intended to defame or defraud anyone or any organization. \n"
+def rules(update, context):
+    user = update.message.from_user
+    logger.info("User %s 's reply: %s", user.first_name, update.message.text)
 
-        "\n3. Third-party solicitations or advertisements. This includes promotion or endorsement of any financial, "
-        "commercial or non-governmental agency. Comments that support or encourage illegal activity. \n"
+    #set reply_keyboard
+    reply_keyboard = [["OK, can"]]
 
-        "\nThank you for your support! \n"
-        "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n",
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
-        )
+    update.message.reply_text(
+    "Great! Please help us to build a safe space, by not posting:\n"
 
-        return INTRO
+    "\n1. Graphic, obscene, explicit or racially/religiously offensive content. \n"
+
+    "\n2. Anything abusive, hateful or intended to defame or defraud anyone or any organization. \n"
+
+    "\n3. Third-party solicitations or advertisements. This includes promotion or endorsement of any financial, "
+    "commercial or non-governmental agency. Comments that support or encourage illegal activity. \n"
+
+    "\nThank you for your support! \n"
+    "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n",
+    reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    )
+
+    return INTRO
 
 
 def intro(update, context):
@@ -362,6 +373,7 @@ def catch_random(update, context):
 
 
 add_start_cmd = CommandHandler('start', start)
+add_disclaimer = MessageHandler(Filters.text, disclaimer)
 add_rules = MessageHandler(Filters.text, rules)
 add_intro = MessageHandler(Filters.text, intro)
 add_name = MessageHandler(Filters.text, name)
