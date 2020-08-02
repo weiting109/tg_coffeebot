@@ -39,7 +39,7 @@ class CoffeeDB():
                 matches
                 (user1_id INT NOT NULL,
                 user2_id INT NOT NULL,
-                datetime DATETIME
+                datetime DATE
                 )
             ''')
         self.conn.commit()

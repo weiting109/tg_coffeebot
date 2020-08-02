@@ -34,6 +34,21 @@ def matchedPreviously(update, context):
     match = db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone()
     return match!=None
 
+def remainingMatches(update):
+    """
+    Check if user has reached maximum number of matches allowed each day (5 matches per 24 hours)
+    """
+    daily_allowed_matches = 5
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).date()
+
+    count_user1 = db.c.execute(f"SELECT * FROM matches WHERE user1_id='{update.effective_user.username}' AND datetime='{today}'").fetchall()
+    count_user1 = len(count_user1)
+
+    count_user2 = db.c.execute(f"SELECT * FROM matches WHERE user2_id='{update.effective_user.username}' AND datetime='{today}'").fetchall()
+    count_user2 = len(count_user2)
+
+    return daily_allowed_matches - (count_user1 + count_user2)
+
 def start(update, context):
 
     user = update.message.from_user
@@ -41,43 +56,51 @@ def start(update, context):
 
     if matchedPreviously(update, context):
 
-        #check if user has obtained a match before trying again
-        match = db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone()
-        matched = match[CoffeeDB.col['matched']]
-        context.user_data['name'] = match[CoffeeDB.col['firstname']]
-        context.user_data['gender'] = match[CoffeeDB.col['gender']]
-        context.user_data['age'] = match[CoffeeDB.col['agegroup']]
-        context.user_data['bio'] = match[CoffeeDB.col['bio']]
-
-        if matched==1:
-        #if user has gotten a match before, jump straight to bio section
-            update.message.reply_text(
-            "Welcome back to Better To(gather)'s party-matching bot! "
-            "Tell us another interesting thing about yourself?")
-
-            return BIO
-
-        else:
-            update.message.reply_text('Still waiting for match...')
-            return ConversationHandler.END
+    #check if user has hit maximum number of matches allowed daily
+    remaining_matches = remainingMatches(update)
+    if remaining_matches == 0:
+        update.message.reply_text('Sorry, you have no matches left today!')
+        return ConversationHandler.END
 
     else:
-    #if user is new, sends starting message and request password
-    #prompts user to set a username and ends conversation if username is unavailable
-        if isUsernameAvailable(update):
-            update.message.reply_text(
-            "Welcome to Better To(gather)'s party-matching bot! "
-            "We'll match you with a random cool attendee. Exciting hor? \n"
+        #check if user has obtained a match before trying again
+        if matchedPreviously(update, context):
+            match = db.c.execute(f'SELECT * FROM users WHERE chat_id={update.effective_chat.id}').fetchone()
+            matched = match[CoffeeDB.col['matched']]
+            context.user_data['name'] = match[CoffeeDB.col['firstname']]
+            context.user_data['gender'] = match[CoffeeDB.col['gender']]
+            context.user_data['age'] = match[CoffeeDB.col['agegroup']]
+            context.user_data['bio'] = match[CoffeeDB.col['bio']]
 
-            "\nYou shall not pass...without a password! Please enter:"
-            )
+            if matched==1:
+            #if user has gotten a match before, jump straight to bio section
+                update.message.reply_text(f'''
+                Welcome back to Better To(gather)'s party-matching bot! You have {remaining_matches} matches left today.\n
+                \nTell us another interesting thing about yourself?''')
 
-            #changes state of conv_handler. should make this function a bit more flexible
-            return RULES
+                return BIO
+
+            else:
+                update.message.reply_text('Still waiting for match...')
+                return ConversationHandler.END
 
         else:
-            update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
-            return ConversationHandler.END
+        #if user is new, sends starting message and request password
+        #prompts user to set a username and ends conversation if username is unavailable
+            if isUsernameAvailable(update):
+                update.message.reply_text(
+                "Welcome to Better To(gather)'s party-matching bot! "
+                "We'll match you with a random cool attendee. Exciting hor? \n"
+
+                "\nYou shall not pass...without a password! Please enter:"
+                )
+
+                #changes state of conv_handler. should make this function a bit more flexible
+                return RULES
+
+            else:
+                update.message.reply_text('Oops! Must have username then can continue. Set username first then try again!')
+                return ConversationHandler.END
 
 
 def rules(update, context):
@@ -250,7 +273,7 @@ def insertNewMatch(update, match_username):
 
     match_info = (user1,
                  user2,
-                 datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))))
+                 datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).date())
 
     db.c.execute('INSERT INTO matches VALUES (?,?,?)',match_info)
     db.conn.commit()
