@@ -4,6 +4,7 @@ Handlers for NDP Better To(gather) chatbot
 """
 import logging
 import datetime
+import random
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
 from config import db
@@ -54,8 +55,6 @@ def start(update, context):
     user = update.message.from_user
     logger.info("User %s has started a match request", user.first_name)
 
-    if matchedPreviously(update, context):
-
     #check if user has hit maximum number of matches allowed daily
     remaining_matches = remainingMatches(update)
     if remaining_matches == 0:
@@ -92,7 +91,7 @@ def start(update, context):
                 "Welcome to Better To(gather)'s party-matching bot! "
                 "We'll match you with a random cool attendee. Exciting hor? \n"
 
-                "\nYou shall not pass...without a password! Please enter:"
+                "\nYou shall not pass...without the password! Please enter:"
                 )
 
                 #changes state of conv_handler. should make this function a bit more flexible
@@ -141,7 +140,8 @@ def rules(update, context):
     "commercial or non-governmental agency. Comments that support or encourage illegal activity. \n"
 
     "\nThank you for your support! \n"
-    "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n",
+    "If you encounter an abusive individual, drop us a FB message at https://www.facebook.com/Grounduppartysg/. \n"
+    "\nNote that you can only match with a maximum of 5 guests each day. Type anything to continue!",
     reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
     )
 
@@ -238,7 +238,7 @@ def identicalMatchExists(user, match_username):
     res = db.c.execute(f"SELECT * FROM matches WHERE user1_id = '{user1}' AND user2_id = '{user2}'").fetchall()
     return len(res) > 0
 
-def retrieveMatchRow():
+def retrieveMatchRow(user):
     """
     Checks if the matched users have been matched previously (prevent repeated matches)
     Retrieves first available and eligible user to be matched
@@ -289,7 +289,6 @@ def insertNewMatch(update, match_username):
     db.c.execute('INSERT INTO matches VALUES (?,?,?)',match_info)
     db.conn.commit()
 
-
 def bio(update, context):
     user = update.message.from_user
     logger.info("Bio of %s: %s", user.first_name, update.message.text)
@@ -315,20 +314,20 @@ def bio(update, context):
             #send message to curr user
             update.message.reply_text(f'''
                                     We've found a match - meet @{match_username}!
-                                    \n\n Name: {match_name}
-                                    \n Preferred pronouns: {match_gender}
-                                    \n Age group: {match_agegroup}
-                                    \n Bio: {match_bio}
-                                    \n\nGo ahead and drop {match_name} a text to say hello :-) Happy chatting and enjoy the party!''')
+                                    \nName: {match_name}
+                                    \nPreferred pronouns: {match_gender}
+                                    \nAge group: {match_agegroup}
+                                    \nBio: {match_bio}
+                                    \nGo ahead and drop {match_name} a text by tapping on @{match_username} to say hello :-) Happy chatting and enjoy the party!''')
 
             #send message to match
             message = (f'''
                         We've found a match - meet @{user.username}!
-                        \n\n Name: {context.user_data['name']}
-                        \n Preferred pronouns: {context.user_data['gender']}
-                        \n Age group: {context.user_data['age']}
-                        \n Bio: {context.user_data['bio']}
-                        \n\nGo ahead and drop {context.user_data['name']} a text to say hello :-) Happy chatting and enjoy the party!''')
+                        \nName: {context.user_data['name']}
+                        \nPreferred pronouns: {context.user_data['gender']}
+                        \nAge group: {context.user_data['age']}
+                        \nBio: {context.user_data['bio']}
+                        \nGo ahead and drop {context.user_data['name']} a text by tapping on @{user.username} to say hello :-) Happy chatting and enjoy the party!''')
 
             context.bot.send_message(match_chatid, message)
             matched = 1 #current User has been matched
@@ -366,20 +365,58 @@ def cancel(update, context):
 
     return ConversationHandler.END
 
+
+random_replies = [
+    "I don't understand leh, try another reply",
+    "Huh what you saying",
+    "Happy national day! Shiok got public holiday",
+    "Why you keep messaging me",
+    "Still waiting for match? Check out what's happening on https://www.nationaldayparty.com/"
+]
+
+random_stickers = [
+    "CAACAgUAAxkBAAEBJdlfKZ2zeT8Cosuodfpqz-ukzYJ6NAACFQADTn4wGLA4KMnhWKFZGgQ",
+    "CAACAgUAAxkBAAEBJd1fKZ3LKf3kA_8V5Iqjhg_-YCYY4QACKAADTn4wGKcqT6Y78XK-GgQ",
+    "CAACAgUAAxkBAAEBJd9fKZ3YJfH2U_jzbkXQC2cpZZp2zgACGgADTn4wGC-PBAaiswILGgQ",
+    "CAACAgUAAxkBAAEBJeFfKZ3rn_kN84_CrqI5w2v0659pCwACJgADTn4wGG8kWg49qba_GgQ",
+    "CAACAgUAAxkBAAEBJeNfKZ33uWZlR-RUKHWXS682drkAAYcAAjcAA05-MBjPxtwEbufPZRoE",
+    "CAACAgUAAxkBAAEBJeVfKaI2zjrEIilbdmKh0q13ZeyE-gACIAADTn4wGFGMZSkhSNi-GgQ",
+    "CAACAgUAAxkBAAEBJedfKaI6zOT06Qw6G1zBQUF_6U5RjQACHwADTn4wGDE22lRtk0hQGgQ",
+    "CAACAgUAAxkBAAEBJelfKaJDGb8M98UiG6g1YKB3X1SwaAACFgADTn4wGNPkI4-y1Es5GgQ",
+    "CAACAgUAAxkBAAEBJetfKaJI1Z-1EkxpueFXVbf3x8pa1wACVQADTn4wGBFEEQQx3ytSGgQ",
+    "CAACAgUAAxkBAAEBJfVfKaMR8Y22ZFBsH3v48nu-MFSDVgACIQADXJ7ICTdvc98aneCaGgQ",
+    "CAACAgUAAxkBAAEBJflfKaM72eyWdLJbeLUlooR2_WduhgACHwADXJ7ICbDLXkyMiIb6GgQ"
+]
+
 def catch_random(update, context):
+    """
+    Randomize replies to unrecognized commands or messages with Singapore-themed stickers/text
+    """
     user = update.message.from_user
     logger.info("User %s sent an unrecognized command %s", user.first_name, update.message.text)
-    update.message.reply_text("I don't understand leh, try another reply")
+
+    reply_keyboard = [["/start", "Knock knock"]]
+
+    reply = random.choice(random_replies)
+    sticker = random.choice(random_stickers)
+
+    if random.choice([0,1,2])==0:
+        update.message.reply_text(reply,
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
+
+    else:
+        update.message.reply_sticker(sticker,
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
 
 
 add_start_cmd = CommandHandler('start', start)
-add_disclaimer = MessageHandler(Filters.text, disclaimer)
-add_rules = MessageHandler(Filters.text, rules)
-add_intro = MessageHandler(Filters.text, intro)
-add_name = MessageHandler(Filters.text, name)
-add_gender = MessageHandler(Filters.text, gender)
-add_age = MessageHandler(Filters.text, age)
-add_bio = MessageHandler(Filters.text, bio)
+add_disclaimer = MessageHandler(Filters.text & ~Filters.command, disclaimer)
+add_rules = MessageHandler(Filters.text & ~Filters.command, rules)
+add_intro = MessageHandler(Filters.text & ~Filters.command, intro)
+add_name = MessageHandler(Filters.text & ~Filters.command, name)
+add_gender = MessageHandler(Filters.text & ~Filters.command, gender)
+add_age = MessageHandler(Filters.text & ~Filters.command, age)
+add_bio = MessageHandler(Filters.text & ~Filters.command, bio)
 add_catch_random = MessageHandler(Filters.all, catch_random)
 
 if __name__ == "__main__":
